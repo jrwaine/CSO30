@@ -35,11 +35,13 @@ ddd ./aritmDbg.out
 echo ""
 
 echo "5)"
+gcc -static -pg -g -o ./aritmGprof.out testeAritm.c libtest.a
+./aritmGprof.out
+gprof ./aritmGprof.out gmon.out
 echo ""
 
 echo "6)"
-echo ""
-uptime
+strace uptime
 echo ""
 
 rm *.o
