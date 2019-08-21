@@ -1,0 +1,14 @@
+Modelo LaTeX de relatórios
+Versão 0.1, agosto de 2007
+Autor: prof. Carlos A. Maziero
+
+Este modelo é composto pelos seguintes arquivos:
+
+- main.tex        : documento principal, que inclui os demais
+- packages.tex    : inclusão de packages úteis para a redação
+- referencias.bib : referências bibliográficas BibTeX
+- Makefile        : automatiza as principais tarefas (precisa do make)
+
+Para compilar, digite "latex main" ou "make".
+
+Críticas e sugestões: maziero@ppgia.pucpr.br

@@ -1,0 +1,53 @@
+\documentclass [12pt,oneside] {article}
+
+\input{packages.tex} % incluir pacotes e configurações
+
+%=====================================================
+
+\begin {document}
+
+\title {Relatório sobre \emph{contexts.c}}
+\author {Waine Junior \and Giovanni Forastieri}
+\date {Agosto de 2019}
+\maketitle
+
+%=====================================================
+
+\section{Introdução}
+Este relatório tem como objetivo explicar a execução do código presente no arquivo \emph{contexts.c}. Primeiro descrevendo os objetivos e parâmetros das funções referentes a contextos presentes nele. Depois a estrutura de dado utilizada. Por fim o que cada linha de código que manipulam contextos fazem. Além disso, é apresentado o diagrama de tempo da execução do código.
+
+\section{Funções}
+
+O código utiliza funções padrão POSIX para manipulação de contexto. São elas:
+\begin{itemize}
+	\item \texttt{getcontext(\&a)}: tem como objetivo obter o atual contexto do programa e gravá-lo na variável \texttt{a}, a qual é do tipo \texttt{ucontext\_t}, estrutura explicada na seção \ref{sec:estr_dados}.
+	\item \texttt{setcontext(\&a)}: tem como objetivo alterar o contexto atual, restaurando aquele apontado pela variável \texttt{a}.
+	\item \texttt{swapcontext(\&a,\&b)}: tem como objetivo trocar o contexto, salvando o atual em \texttt{a} e restaurando aquele em \texttt{b}. É equivalente à chamada de \texttt{getcontext(\&a);} seguida de
+	\texttt{setcontext(\&b);}.
+	\item \texttt{makecontext(\&a, ...)}: tem como objetivo alterar o contexto salvo em \texttt{a}, mais especificamente a "função chamada" por esse e os argumentos passados para essa.
+\end{itemize}
+
+\section{Estruturas de dados}\label{sec:estr_dados}
+
+Para o armazenamento das propriedades do contexto, é utilizada um estrutura de dado presente no arquivo \emph{ucontext.h}, denominada \texttt{ucontext\_t}. O significado dos campos da estrutura utilizados no código é:
+
+\begin{itemize}
+	\item \texttt{void* uc\_stack.ss\_sp}: \emph{stack pointer} da pilha de sinal (\emph{signal stack}).
+	\item \texttt{size\_t uc\_stack.ss\_size}: tamanho, em bytes, da pilha de sinal. Deve ser definido como o tamanho alocado para a pilha. O arquivo \emph{signal.h} define um valor padrão para ser utilizados: \texttt{SIGSTKSZ}, tamanho canônico.
+	\item \texttt{int uc\_stack.ss\_flags}: operador ou lógico entre as \emph{flags} \texttt{SS\_DISABLE } e\\ \texttt{SS\_ONSTACK}. A primeira diz para o sistema se a pilha de sinal não deve ser utilizada. A segunda é uma variável setada pelo sistema que diz se a pilha está em uso atualmente. Caso não esteja em uso, os sinais devem ser entregues à pilha do usuário normal 
+	\item \texttt{ucontext\_t.uc\_link}: aponta para o contexto que será resumido após o fim da execução do contexto da estrutura.
+\end{itemize}
+
+A pilha de sinal (\emph{signal stack}) é utilizada para definir o tratamento dos sinais gerados durante a execução de um programa, por meio da função \texttt{signal()} ou \texttt{sigaction()}. O levantamento de um sinal pode ser feita por meio das chamadas \texttt{kill()} e \texttt{raise()}. Os tipos padrão de sinais que podem ser gerados são definidos no arquivo \emph{signal.h} \cite{ManualGNU2019}.
+
+\section{Código}
+
+\section{Diagrama de tempo da execução}
+
+% definição do estilo e inclusão da bibliografia
+\bibliographystyle{plain}
+\bibliography{referencias}
+
+\end{document}
+
+%=====================================================

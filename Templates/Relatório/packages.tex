@@ -1,0 +1,37 @@
+% Codificação dos caracteres da entrada (use ISO no Windows e UTF no Linux)
+%\usepackage[isolatin]{inputenc}  % arquivos LaTeX em ISO-8859-1
+\usepackage[utf8]{inputenc}     % arquivos LaTeX em Unicode
+
+% packages usados na construção deste documento
+\usepackage [T1]{fontenc}        % caracteres acentuados corretos na saida
+\usepackage {times}              % Fontes Times
+\usepackage [portuguese]{babel}      % texto em portugues
+\usepackage {indentfirst}        % indentar primeiro paragrafo
+\usepackage {epsfig}             % inclusao de figuras em formato EPS
+
+% usar papel no formato A4 com margens 30,30,25,25 mm^M
+\usepackage[a4paper,top=30mm,bottom=30mm,left=25mm,right=25mm]{geometry}
+
+% relaxar o espaçamento entre caracteres
+% \sloppy
+
+% O espaçamento entre linhas deve ser 1.5
+% \renewcommand{\baselinestretch}{1.5}
+
+% indentação dos parágrafos é 15mm
+\setlength{\parindent}{15mm}
+
+% pacote sugerido para formata��o de c�digo-fonte
+\usepackage{listings}
+\lstset{language=c}
+\lstset{inputencoding=latin1,extendedchars=true}
+\lstset{basicstyle=\small,commentstyle=\textit,stringstyle=\ttfamily}
+\lstset{showspaces=false,showtabs=false,showstringspaces=false}
+\lstset{numbers=left,stepnumber=5,numberstyle=\tiny}
+\lstset{columns=flexible,mathescape=true}
+\lstset{frame=single}
+
+% pacote sugerido para formatação de algoritmos
+\usepackage{algorithm,algorithmic}
+\floatname{algorithm}{Algoritmo}
+\renewcommand{\algorithmiccomment}[1]{~~~// #1}

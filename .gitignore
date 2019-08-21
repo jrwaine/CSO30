@@ -3,3 +3,8 @@
 *.a
 *.so*
 *.DS_Store
+*.log
+*.blg
+*.synctex.gz
+*.aux
+*.bbl

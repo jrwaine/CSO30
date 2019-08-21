@@ -63,7 +63,7 @@ int main (int argc, char *argv[])
    {
       ContextPing.uc_stack.ss_sp = stack ;
       ContextPing.uc_stack.ss_size = STACKSIZE;
-      ContextPing.uc_stack.ss_flags = 0;
+      ContextPing.uc_stack.ss_flags = 0; 
       ContextPing.uc_link = 0;
    }
    else
@@ -82,7 +82,7 @@ int main (int argc, char *argv[])
       ContextPong.uc_stack.ss_sp = stack ;
       ContextPong.uc_stack.ss_size = STACKSIZE;
       ContextPong.uc_stack.ss_flags = 0;
-      ContextPong.uc_link = 0;
+      ContextPong.uc_link = 0; 
    }
    else
    {
