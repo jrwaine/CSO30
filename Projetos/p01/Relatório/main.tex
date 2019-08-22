@@ -42,8 +42,89 @@ A pilha de sinal (\emph{signal stack}) é utilizada para definir o tratamento do
 
 \section{Código}
 
+A seguir é explicado o objetivo e o funcionamento do código presente no arquivo \emph{contexts.c}. Primeiro é apresentado a parte do código fonte e então é feita sua explicação.
+
+\begin{footnotesize}
+	\begin{verbatim}
+	getcontext (&ContextPing);
+	stack = malloc (STACKSIZE) ;
+	if (stack){
+	    ContextPing.uc_stack.ss_sp = stack;
+	    ContextPing.uc_stack.ss_size = STACKSIZE;
+	    ContextPing.uc_stack.ss_flags = 0; 
+	    ContextPing.uc_link = 0;
+	}
+	else{
+	    perror ("Erro na criação da pilha: ");
+	    exit (1);
+	}
+	makecontext (&ContextPing, (void*)(*BodyPing), 1, "    Ping");
+	\end{verbatim}
+\end{footnotesize}
+
+O código acima primeiro copia o contexto atual para a variável \texttt{ContextPing}. Após isso, caso \texttt{stack} tenha sido alocada corretamente, ajusta o valores do contexto Ping. Os atributos ajustados e suas descrições foram apresentados na seção \ref{sec:estr_dados}.
+
+Por fim, um contexto é criado por meio de \texttt{makecontext()}. A função \texttt{BodyPing} e seu parâmetro "Ping" é passada para o Ping. Assim, quando esse contexto for ativo, a função \texttt{BodyPing} é chamada e a \emph{string} "Ping" é passada como parâmetro para ela. O mesmo é feito com a variável \texttt{ContextPong}, com a diferença de que são passados como parâmetros para o contexto a função \texttt{BodyPong} e a \emph{string} "Pong".
+
+
+\begin{footnotesize}
+	\begin{verbatim}
+	void BodyPing (void * arg){
+	    int i ;
+	    printf ("%s iniciada\n", (char *) arg) ;
+	
+	    for (i=0; i<4; i++)
+	    {
+	        printf ("%s %d\n", (char *) arg, i) ;
+	        swapcontext (&ContextPing, &ContextPong);
+	    }	
+	    printf ("%s FIM\n", (char *) arg) ;
+	    swapcontext (&ContextPing, &ContextMain) ;
+	}
+	
+	void BodyPong (void * arg){
+	    int i;
+	    printf ("%s iniciada\n", (char *) arg) ;
+	    for (i=0; i<4; i++)
+	    {
+	        printf ("%s %d\n", (char *) arg, i) ;
+	        swapcontext (&ContextPong, &ContextPing);
+	    }
+	    printf ("%s FIM\n", (char *) arg) ;
+	    swapcontext (&ContextPong, &ContextMain) ;
+	}
+	
+	int main(){
+	    ...
+	    swapcontext (&ContextMain, &ContextPing);
+	    swapcontext (&ContextMain, &ContextPong);
+	    ...
+	}
+	\end{verbatim}
+\end{footnotesize}
+
+Primeiramente, na \texttt{main}, o contexto atual é salvo na variável \texttt{ContextMain} e então ele é trocado para \texttt{ContextPing}. Isso faz com que a função do contexto Ping (\texttt{BodyPing} com seus parâmetros) seja chamada, já que essa é a primeira "ativação" do contexto após sua inicialização. Na função \texttt{BodyPing}, primeiro é impressa uma mensagem notificando seu início. Então ela entra no \texttt{for}, em que é reportado o valor atual do contador \texttt{i} e após isso é feita a troca de contexto, salvando o atual na variável \emph{contextPing} e alterando-o para o da variável \emph{contextPong}.
+
+Isso faz com que a função do contexto Pong (\texttt{BodyPong}) seja chamada, pelo mesmo motivo do ocorrido no primeiro \texttt{swapcontext()}. A função Pong segue a mesma lógica da Ping, alterando apenas as mensagens impressas e as variáveis para troca de contexto, salvando o atual em \texttt{ContextPong} e alterando-o para aquele em \texttt{ContextPing}.
+
+Essa troca entre contextos ocorre até que ambos encerrem seus loops \texttt{for}. Ao final de ambos é reportado seu fim. O contexto Ping é encerrado primeiro que o Pong, por isso na \texttt{main} é feita uma última troca para o contexto Pong para imprimir sua mensagem de saída.
+
 \section{Diagrama de tempo da execução}
 
+O diagrama de tempo da execução é mostrado na figura \ref{fig:tim_digr}:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{time_diagram.png}
+	\caption{Diagrama de tempo da execução do código gerado pelo arquivo \emph{contexts.c}}
+	\label{fig:tim_digr}
+\end{figure}
+
+É considerado que a criação e a configuração do contexto é feita de imediato. Por isso não foi adicionado um período de contexto ativo entre a criação o uso do \texttt{makecontext}.
+
+\section{Conclusão}
+
+Neste relatório foram apresentados conceitos relacionados a implementação de operações envolvendo contextos em ambiente UNIX. Além disso,  é explicado o funcionamento do exemplo de código presente no arquivo \emph{contexts.c} e feito o diagrama de tempo da execução.
 % definição do estilo e inclusão da bibliografia
 \bibliographystyle{plain}
 \bibliography{referencias}
