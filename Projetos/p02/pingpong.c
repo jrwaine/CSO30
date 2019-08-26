@@ -77,6 +77,9 @@ int task_create (task_t *task,
 
 void task_exit (int exitCode)
 {
+#ifdef DEBUG
+    printf("Encerrando tarefa de ID %d com codigo %d\n", __curr_task->tid, exitCode);
+#endif
     task_switch(&__task_main);
 }
 
