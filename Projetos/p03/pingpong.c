@@ -27,20 +27,20 @@ void update_queues(task_t* task, int new_state)
         return;
     if(task->state == INIT)
         queue_rm = &__queue_init_tasks;
-    if(task->state == READY)
+    else if(task->state == READY)
         queue_rm = &__queue_ready_tasks;
-    if(task->state == SUSPS)
+    else if(task->state == SUSPS)
         queue_rm = &__queue_susps_tasks;
-    if(task->state == ENDED)
+    else if(task->state == ENDED)
         queue_rm = &__queue_ended_tasks;
 
     if(new_state == INIT)
         queue_add = &__queue_init_tasks;
-    if(new_state == READY)
+    else if(new_state == READY)
         queue_add = &__queue_ready_tasks;
-    if(new_state == SUSPS)
+    else if(new_state == SUSPS)
         queue_add = &__queue_susps_tasks;
-    if(task->state == ENDED)
+    else if(new_state == ENDED)
         queue_add = &__queue_ended_tasks;
     
     queue_remove((queue_t**)(queue_rm), (queue_t*)(task));
@@ -153,7 +153,10 @@ void task_exit (int exitCode)
     printf("Encerrando tarefa de ID %d com codigo %d\n", __curr_task->tid, exitCode);
 #endif
     update_queues(__curr_task, ENDED);
-    task_switch(&__task_main);
+    if(__curr_task == &__task_dispatcher) // exit tarefas do user é p dispatcher
+        task_switch(&__task_main);
+    else
+        task_switch(&__task_dispatcher);
 }
 
 
