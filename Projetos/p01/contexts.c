@@ -68,7 +68,7 @@ int main (int argc, char *argv[])
    }
    else
    {
-      perror ("Erro na criação da pilha: ");
+      perror ("Erro na criaï¿½ï¿½o da pilha: ");
       exit (1);
    }
 
@@ -76,7 +76,7 @@ int main (int argc, char *argv[])
 
    getcontext (&ContextPong);
 
-   stack = malloc (SIGSTKSZ) ; // tamanho canonico da stack
+   stack = malloc (STACKSIZE) ; // tamanho canonico da stack
    if (stack)
    {
       ContextPong.uc_stack.ss_sp = stack ;
@@ -86,7 +86,7 @@ int main (int argc, char *argv[])
    }
    else
    {
-      perror ("Erro na criação da pilha: ");
+      perror ("Erro na criaï¿½ï¿½o da pilha: ");
       exit (1);
    }
 
