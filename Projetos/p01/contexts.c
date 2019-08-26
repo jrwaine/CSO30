@@ -76,7 +76,7 @@ int main (int argc, char *argv[])
 
    getcontext (&ContextPong);
 
-   stack = malloc (STACKSIZE) ;
+   stack = malloc (SIGSTKSZ) ; // tamanho canonico da stack
    if (stack)
    {
       ContextPong.uc_stack.ss_sp = stack ;

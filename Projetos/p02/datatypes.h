@@ -7,10 +7,24 @@
 #ifndef __DATATYPES__
 #define __DATATYPES__
 
+#define _XOPEN_SOURCE 600   /* Para compilar no MAC */
+#include <ucontext.h>
+#include "queue.h"
+#include <signal.h> // para tamanho da stack
+#include <stdio.h>  // para buffer do printf
+#include <stdlib.h> // para malloc
+
+
 // Estrutura que define uma tarefa
 typedef struct task_t
 {
-  // preencher quando necessário
+    // Cast para queue_t para operações
+    struct task_t *prev;
+    struct task_t *next;
+    // ID da tarefa
+    int tid;
+    // Contexto da tarefa
+    ucontext_t context;
 } task_t ;
 
 // estrutura que define um semáforo
