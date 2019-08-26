@@ -2,11 +2,9 @@
 #include "pingpong.h"
 
 unsigned int __tid = 0;
-task_t __context_main;
+task_t __task_main;
 task_t* __curr_task;
 struct queue_t* __queue_task;
-
-#define DEBUG
 
 void pingpong_init()
 {
@@ -17,13 +15,28 @@ void pingpong_init()
     setvbuf (stdout, 0, _IONBF, 0); // ARRUMAR
 
     // salva contexto atual na main
-    getcontext(&__context_main.context);
-    __context_main.tid = __tid;
+    getcontext(&__task_main.context);
+    char* stack = malloc (SIGSTKSZ) ;
+    if (stack)
+    {
+        __task_main.context.uc_stack.ss_sp = stack ;
+        __task_main.context.uc_stack.ss_size = SIGSTKSZ;
+        __task_main.context.uc_stack.ss_flags = 0;
+        __task_main.context.uc_link = 0; 
+    }
+    else
+    {
+        perror ("Erro na criação da pilha da tarefa main\n");
+        exit(-1);
+    }
+    __task_main.prev = NULL;
+    __task_main.next = NULL;
+    __task_main.tid = __tid;
     __tid++;
     __queue_task = NULL;
     // Adiciona a task main à fila de tasks
-    queue_append((queue_t**)(&__queue_task), (queue_t*)(&__context_main));
-    __curr_task = &(__context_main);
+    queue_append((queue_t**)(&__queue_task), (queue_t*)(&__task_main));
+    __curr_task = &(__task_main);
 }
 
 
@@ -35,11 +48,13 @@ int task_create (task_t *task,
     printf("Criando tarefa de ID %d\n", __tid);
 #endif
     // Relacionado a task
+    task->prev = NULL;
+    task->next = NULL;
     task->tid = __tid;
     __tid++;
     queue_append((queue_t**)(&__queue_task), (queue_t*)(task));
     
-    // Relacionado a criação e configuração do contexto
+    // Relacionado a criacao e configuracao do contexto
     getcontext(&(task->context));
     char* stack = malloc (SIGSTKSZ) ;
     if (stack)
@@ -62,7 +77,7 @@ int task_create (task_t *task,
 
 void task_exit (int exitCode)
 {
-    task_switch(&__context_main);
+    task_switch(&__task_main);
 }
 
 
@@ -73,12 +88,18 @@ int task_switch (task_t *task)
         printf("Tarefa nao inicializada, nao eh possivel trocar para ela\n");
         return -1;
     }
+    if(task == __curr_task)
+    {
+        printf("Tarefa ja em execucao, nao eh possivel trocar para ela\n");
+        return -1;
+    }
 #ifdef DEBUG
     printf("Tarefa de ID %d assumindo o processador\n", task->tid);
-#endif    
-    int i = swapcontext(&(__curr_task->context), &(task->context));
+#endif
+    // atualiza task atual e muda de contextos
+    task_t* aux = __curr_task;
     __curr_task = task;
-    return i;
+    return swapcontext(&(aux->context), &(task->context));
 }
 
 

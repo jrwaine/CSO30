@@ -30,25 +30,25 @@ typedef struct task_t
 // estrutura que define um semáforo
 typedef struct
 {
-  // preencher quando necessário
+    // preencher quando necessário
 } semaphore_t ;
 
 // estrutura que define um mutex
 typedef struct
 {
-  // preencher quando necessário
+    // preencher quando necessário
 } mutex_t ;
 
 // estrutura que define uma barreira
 typedef struct
 {
-  // preencher quando necessário
+    // preencher quando necessário
 } barrier_t ;
 
 // estrutura que define uma fila de mensagens
 typedef struct
 {
-  // preencher quando necessário
+    // preencher quando necessário
 } mqueue_t ;
 
 #endif
