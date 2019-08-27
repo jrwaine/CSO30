@@ -25,7 +25,7 @@
 #define LOWEST_PRIOR (-20)
 #define HIGHEST_PRIOR (+20)
 #define DEFAULT_PRIOR (0)
-#define ALPHA_PRIOR (-1)
+#define ALPHA_PRIOR (0)
 
 // defines para ticks
 #define TICK_INTERVAL (1000) // em microssegundos

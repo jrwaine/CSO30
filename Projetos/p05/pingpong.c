@@ -123,7 +123,7 @@ void sig_treat()
     {
         // preempta e retorna para o dispatcher
         __curr_task->ticks = TICK_QUANTUM;
-        task_switch(&__task_dispatcher);
+        task_yield(&__task_dispatcher);
     }
 }
 
