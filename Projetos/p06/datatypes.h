@@ -10,7 +10,8 @@
 #define _XOPEN_SOURCE 600   /* Para compilar no MAC */
 #include <ucontext.h>
 #include "queue.h"
-#include <signal.h> // para tamanho da stack
+#include <signal.h> // para tamanho da stack e signals
+#include <sys/time.h> // para interrupcoes por tempo
 #include <stdio.h>  // para buffer do printf
 #include <stdlib.h> // para malloc
 
@@ -25,6 +26,17 @@
 #define HIGHEST_PRIOR (+20)
 #define DEFAULT_PRIOR (0)
 #define ALPHA_PRIOR (-1)
+
+// defines para ticks
+#define TICK_INTERVAL (1000) // em microssegundos
+#define TICK_QUANTUM (20) // numero de ticks por tarefa
+
+// defines para classificacoes das tarefas
+#define TASK_SYS 0
+#define TASK_USER 1
+
+// imprimir informacoes de tempo das tarefas, comentar caso n desejado
+#define PRINT_INFO
 
 // Estrutura que define uma tarefa
 typedef struct task_t
@@ -42,6 +54,21 @@ typedef struct task_t
     int stc_prior;
     // Prioridade dinâmica da tarefa (escala negativa)
     int dyn_prior;
+    // Numero de ticks restantes da tarefa
+    int ticks;
+    // Classificador do tipo da tarefa
+    int task_type;
+    
+    // Contadores de ticks (timers) da tarefa, relacionados a TICK_INTERVAL
+    unsigned int time_ini;      // atualiza quando tarefa eh criada
+    unsigned int time_total;    // atualiza quando perde ou ganha cpu
+    unsigned int time_cpu;      // atualiza quando perde cpu
+    unsigned int time_last_actv;// atualiza quando ganha cpu
+    // Numero de ativacoes
+    unsigned int n_activations; // atualiza quando ganha cpu
+    // Tarefa ja foi iniciada ou nao
+    int is_ini;                 // atualiza quando ganha cpu pela 1 vez
+
 } task_t ;
 
 // estrutura que define um semáforo
