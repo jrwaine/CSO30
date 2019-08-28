@@ -26,7 +26,7 @@ LFLAGS =
 LIBS =
 
 # define the C source files
-SRCS = pingpong-maintask.c pingpong.c queue.c
+SRCS = pingpong-join.c pingpong.c queue.c
 
 # define the C object files 
 #

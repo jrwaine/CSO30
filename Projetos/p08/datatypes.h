@@ -38,6 +38,10 @@
 // imprimir informacoes de tempo das tarefas, comentar caso n desejado
 #define PRINT_INFO
 
+// numero maximos de tarefas que podem depender de uma unica tarefa
+#define MAX_TASKS_JOIN 1000
+
+
 // Estrutura que define uma tarefa
 typedef struct task_t
 {
@@ -69,6 +73,12 @@ typedef struct task_t
     // Tarefa ja foi iniciada ou nao
     int is_ini;                 // atualiza quando ganha cpu pela 1 vez
 
+    // Vetor de tarefas que dependem dessa
+    struct task_t* queue_tasks_join[MAX_TASKS_JOIN];
+    // Numero de tarefas que dependem dessa
+    unsigned int n_tasks_join;
+    // Codigo de saida da tarefa
+    int exit_code;
 } task_t ;
 
 // estrutura que define um semáforo

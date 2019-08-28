@@ -180,16 +180,23 @@ void pingpong_init()
     __task_main.next = NULL;
     __task_main.tid = __tid;
     __task_main.state = READY;
+    
     __task_main.stc_prior = DEFAULT_PRIOR;
     __task_main.dyn_prior = 0;
     __task_main.ticks = TICK_QUANTUM;
     __task_main.task_type = TASK_USER;
+
     __task_main.time_ini = 0;
     __task_main.time_total = 0;
     __task_main.time_cpu = 0;
     __task_main.time_last_actv = 0;
-    __task_main.n_activations = 0; // main foi ativada uma vez?
-    __task_main.is_ini = 0; // main ja foi iniciada?
+    __task_main.n_activations = 0;
+    
+    __task_main.is_ini = 0;
+    int i;
+    for(i = 0; i < MAX_TASKS_JOIN; i++)
+        __task_main.queue_tasks_join[i] = NULL;
+    __task_main.n_tasks_join = 0;
     __tid++;
     // task atual eh a main
     __curr_task = &(__task_main);
@@ -242,6 +249,7 @@ int task_create (task_t *task,
     task->next = NULL;
     task->tid = __tid;
     task->state = READY; // por padrao a tarefa esta pronta para execucao
+    
     task->stc_prior = DEFAULT_PRIOR;
     task->dyn_prior = 0;
     task->ticks = TICK_QUANTUM;
@@ -252,6 +260,12 @@ int task_create (task_t *task,
     task->time_last_actv = 0;
     task->n_activations = 0;
     task->is_ini = 0;
+
+    int i;
+    for(i = 0; i < MAX_TASKS_JOIN; i++)
+        task->queue_tasks_join[i] = NULL;
+    task->n_tasks_join = 0;
+    
     __tid++;
     
     // Relacionado a criacao e configuracao do contexto
@@ -286,6 +300,15 @@ void task_exit (int exitCode)
     printf("Encerrando tarefa de ID %d com codigo %d\n", __curr_task->tid, exitCode);
 #endif
     update_queues(__curr_task, ENDED);
+    __curr_task->exit_code = exitCode;
+
+    // disponibiliza as outras tarefas que dependem dessa para execucao
+    while(__curr_task->n_tasks_join > 0)
+    {
+        __curr_task->n_tasks_join--;
+        task_t* aux = __curr_task->queue_tasks_join[__curr_task->n_tasks_join];
+        update_queues(aux, READY);
+    }
     // saida de tarefas eh sempre para o dispatcher
     task_switch(&__task_dispatcher);
 }
@@ -386,4 +409,28 @@ int task_getprio (task_t *task)
     if(task == NULL)
         task = __curr_task;
     return task->stc_prior;
+}
+
+
+int task_join (task_t *task)
+{
+    // se task nao existe, retorna erro (-1)
+    if(task == NULL)
+        return -1;
+    // se task ja foi finalizada, retorna seu codigo de saida
+    if(task->state == ENDED)
+        return task->exit_code;
+    
+    // coloca a tarefa atual no vetor de dependencias de task
+    task->queue_tasks_join[task->n_tasks_join] = __curr_task;
+    task->n_tasks_join++;
+    // tira a tarefa atual da fila de prontas
+    update_queues(__curr_task, SUSPS);
+    // chama escalonador
+    task_switch(&__task_dispatcher);
+
+    // garante que tarefa foi finalizada
+    if(task->exit_code == ENDED)
+        // retorna codigo de saida da task
+        return task->exit_code;
 }

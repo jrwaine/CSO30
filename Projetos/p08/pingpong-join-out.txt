@@ -1,0 +1,62 @@
+Fila vazia, nao eh possivel remover elemento!
+Main INICIO
+Main 0
+    Pang 0
+        Peng 0
+            Ping 0
+                Pong 0
+                    Pung 0
+Main 1
+    Pang 1
+        Peng 1
+            Ping 1
+                Pong 1
+                    Pung 1
+Main espera Pang...
+    Pang 2
+        Peng 2
+            Ping 2
+                Pong 2
+                    Pung 2
+    Pang FIM
+Task 2 exit: execution time 365 ms, processor time 74 ms, 4 activations
+        Peng 3
+            Ping 3
+                Pong 3
+                    Pung 3
+Pang encerrou com exit code 3
+Main espera Peng...
+        Peng 4
+            Ping 4
+                Pong 4
+                    Pung 4
+        Peng FIM
+Task 3 exit: execution time 608 ms, processor time 123 ms, 7 activations
+            Ping 5
+                Pong 5
+                    Pung 5
+Peng encerrou com exit code 5
+Main espera Ping...
+            Ping 6
+                Pong 6
+                    Pung 6
+            Ping FIM
+Task 4 exit: execution time 738 ms, processor time 170 ms, 9 activations
+                Pong 7
+                    Pung 7
+Ping encerrou com exit code 7
+Main espera Pong...
+                Pong 8
+                    Pung 8
+                Pong FIM
+Task 5 exit: execution time 861 ms, processor time 223 ms, 12 activations
+                    Pung 9
+Pong encerrou com exit code 9
+Main espera Pung...
+                    Pung 10
+                    Pung FIM
+Task 6 exit: execution time 912 ms, processor time 271 ms, 14 activations
+Pung encerrou com exit code 11
+Main FIM
+Task 0 exit: execution time 912 ms, processor time 51 ms, 8 activations
+Task 1 exit: execution time 912 ms, processor time 0 ms, 55 activations
