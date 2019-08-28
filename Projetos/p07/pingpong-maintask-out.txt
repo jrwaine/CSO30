@@ -1,0 +1,20 @@
+Fila vazia, nao eh possivel remover elemento!
+Main INICIO em    0 ms
+    Pang INICIO em   20 ms
+        Peng INICIO em   40 ms
+            Ping INICIO em   60 ms
+                Pong INICIO em   80 ms
+                    Pung INICIO em  100 ms
+Main FIM    em 9130 ms
+Task 0 exit: execution time 9130 ms, processor time 1530 ms, 77 activations
+    Pang FIM    em 16749 ms
+Task 2 exit: execution time 16749 ms, processor time 3059 ms, 153 activations
+        Peng FIM    em 16768 ms
+Task 3 exit: execution time 16768 ms, processor time 3059 ms, 153 activations
+            Ping FIM    em 16780 ms
+Task 4 exit: execution time 16780 ms, processor time 3052 ms, 153 activations
+                Pong FIM    em 16791 ms
+Task 5 exit: execution time 16791 ms, processor time 3051 ms, 153 activations
+                    Pung FIM    em 16806 ms
+Task 6 exit: execution time 16806 ms, processor time 3055 ms, 153 activations
+Task 1 exit: execution time 16806 ms, processor time 0 ms, 843 activations

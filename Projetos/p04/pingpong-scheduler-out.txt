@@ -1,0 +1,62 @@
+Main INICIO
+    Pang iniciando com prioridade 0
+    Pang 0
+    Pang 1
+        Peng iniciando com prioridade 2
+        Peng 0
+    Pang 2
+            Ping iniciando com prioridade 4
+            Ping 0
+    Pang 3
+        Peng 1
+                Pong iniciando com prioridade 6
+                Pong 0
+    Pang 4
+                    Pung iniciando com prioridade 8
+                    Pung 0
+            Ping 1
+        Peng 2
+    Pang 5
+    Pang 6
+                Pong 1
+        Peng 3
+    Pang 7
+            Ping 2
+    Pang 8
+                    Pung 1
+        Peng 4
+    Pang 9
+                Pong 2
+            Ping 3
+    Pang FIM
+        Peng 5
+                    Pung 2
+            Ping 4
+        Peng 6
+                Pong 3
+        Peng 7
+            Ping 5
+        Peng 8
+                    Pung 3
+        Peng 9
+                Pong 4
+            Ping 6
+        Peng FIM
+            Ping 7
+                    Pung 4
+                Pong 5
+            Ping 8
+            Ping 9
+                Pong 6
+            Ping FIM
+                    Pung 5
+                Pong 7
+                Pong 8
+                    Pung 6
+                Pong 9
+                Pong FIM
+                    Pung 7
+                    Pung 8
+                    Pung 9
+                    Pung FIM
+Main FIM
