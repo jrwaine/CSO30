@@ -433,4 +433,5 @@ int task_join (task_t *task)
     if(task->exit_code == ENDED)
         // retorna codigo de saida da task
         return task->exit_code;
+    return -1;
 }
