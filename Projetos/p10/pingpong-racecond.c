@@ -17,7 +17,6 @@ long int soma = 0 ;
 void taskBody(void *id)
 {
    int i ;
-
    for (i=0; i< NUMSTEPS; i++)
    {
       sem_down (&s) ;
@@ -41,7 +40,7 @@ int main (int argc, char *argv[])
    printf ("%d tarefas somando %d vezes cada, aguarde...\n",
            NUMTASKS, NUMSTEPS) ;
 
-   for (i=0; i<NUMTASKS; i++)
+   for (i=0; i<NUMTASKS; i++)  
      task_create (&task[i], taskBody, "Task") ;
 
    for (i=0; i<NUMTASKS; i++)
