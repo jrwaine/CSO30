@@ -15,6 +15,7 @@
 #include <stdio.h>  // para buffer do printf
 #include <stdlib.h> // para malloc
 
+
 // defines relacionados a task
 #define INIT 0
 #define READY 1
@@ -40,7 +41,7 @@
 #define PRINT_INFO
 
 // numero maximos de tarefas que podem depender de uma unica tarefa
-#define MAX_TASKS_JOIN 20
+#define MAX_TASKS_JOIN 100
 
 // numero de ticks para chamar watcher de tarefas dormindo
 #define TICKS_SLEEP_WATCHER 100

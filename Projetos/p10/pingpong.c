@@ -40,9 +40,18 @@ unsigned int systime();
 void print_task_info(task_t* task);
 void sleep_watcher();
 
+
 // Atualiza filas e tarefa para um novo estado (init, pronta, suspensa)
 void update_queues(task_t* task, int new_state)
 {
+#ifdef DEBUG
+    printf("Tarefa %d trocando estado %d para %d\n", task->tid, task->state, new_state);
+#endif
+    int aux = __not_preempt;
+    // nao pode haver preempcao na atualizacao de filas por possiveis
+    // inconsistencia nas filas
+    __not_preempt = 1;
+
     queue_t **queue_add, **queue_rm;
     if(task == NULL)
         return;
@@ -70,13 +79,10 @@ void update_queues(task_t* task, int new_state)
     
     task->state = new_state;
     
-    // nao pode haver preempcao na atualizacao de filas por possiveis
-    // inconsistencia nas filas
-    __not_preempt = 1;
     if(*queue_rm != NULL)
         queue_remove((queue_t**)(queue_rm), (queue_t*)(task));
     queue_append((queue_t**)(queue_add), (queue_t*)(task));
-    __not_preempt = 0;
+    __not_preempt = aux;
 }
 
 // Retorna a soma da prioridade dinamica com a estatica da tarefa
@@ -88,17 +94,18 @@ int task_getprio_total(task_t* task)
 // Despachador
 void dispatcher()
 {
-    // Enquanto ainda houver tarefas prontas ou dorming
+    // Enquanto ainda houver tarefas prontas e nem todas tiverem terminado 
+    // (sem contar dispatcher)
     // Obs.: fila deve ser maior que um pois a tarefa do dispatcher esta nela
     while(queue_size((queue_t*)(__queue_ready_tasks)) > 1 
-        || queue_size((queue_t*)(__queue_sleep_tasks)) > 0)
+        || queue_size(__queue_ended_tasks) < ((int)__tid-1)
+        || queue_size(__queue_susps_tasks) > 0)
     {
         // De tempos em tempos chama o sleep_watcher
         if(__sleep_ticks >= TICKS_SLEEP_WATCHER)
             sleep_watcher();
         // Pega a próxima tarefa
         task_t* next = scheduler();
-
         if(next != &__task_dispatcher)
         {
             task_switch(next);
@@ -110,6 +117,10 @@ void dispatcher()
 // Escalonador
 task_t* scheduler()
 {
+#ifdef DEBUG
+    printf("Pegando proxima tarefa\n");
+#endif
+
     task_t* task = __task_dispatcher.next;
     task_t* aux;
     // Tarefa com maior prioridade (menor valor)
@@ -142,21 +153,22 @@ task_t* scheduler()
 void sig_treat()
 {
 #ifdef DEBUG
-    printf("Tick, tarefa atual possui %d ticks", __curr_task->ticks);
+    printf("Tick, tarefa %d possui %d ticks\n", __curr_task->tid, __curr_task->ticks);
 #endif
     __total_ticks++;
     if(__sleep_ticks < TICKS_SLEEP_WATCHER)
         __sleep_ticks++;
     
-    if(__curr_task->ticks > 0)
-        __curr_task->ticks--;
-
     if(__not_preempt)
         return;
+
+    if(__curr_task->ticks > 0)
+        __curr_task->ticks--;
+    
     // nao preempta tarefas de sistema
     if(__curr_task->task_type == TASK_SYS)
         return;
-    if(__curr_task->ticks == 0)
+    if(__curr_task->ticks <= 0)
     {
         // preempta e retorna para o dispatcher
         __curr_task->ticks = TICK_QUANTUM;
@@ -185,6 +197,10 @@ void print_task_info(task_t* task)
 // Acorda tarefas que ja podem acordar
 void sleep_watcher()
 {
+#ifdef DEBUG
+    printf("Checando tarefas dormindo\n");
+#endif
+
     int size = queue_size(__queue_sleep_tasks);
     // tasks que devem continuar dormindo
     int cont = 0;
@@ -386,13 +402,15 @@ int task_switch (task_t *task)
         return -1;
     }
 #ifdef DEBUG
-    printf("Tarefa de ID %d assumindo o processador\n", task->tid);
+    printf("Trocando de tarefa de %d para %d\n", __curr_task->tid, task->tid);
 #endif
     if(!(task->is_ini))
     {
         task->is_ini = 1;
     }
-
+    int aux_preempt = __not_preempt;
+    // nao preempta durante o switch
+    __not_preempt = 1;
     // atualiza timers da tarefa atual
     __curr_task->time_cpu += systime() - __curr_task->time_last_actv;
     __curr_task->time_total = systime() - __curr_task->time_ini;
@@ -413,6 +431,7 @@ int task_switch (task_t *task)
     // atualiza task atual e muda de contextos
     task_t* aux = __curr_task;
     __curr_task = task;
+    __not_preempt = aux_preempt;
     if(task != aux)
         return swapcontext(&(aux->context), &(task->context));
     return 0;
@@ -430,6 +449,9 @@ int task_id ()
 
 void task_yield ()
 {
+#ifdef DEBUG
+    printf("Preemptando tarefa %d\n", __curr_task->tid);
+#endif
     update_queues(__curr_task, READY);
     task_switch(&__task_dispatcher);
 }
@@ -464,7 +486,9 @@ int task_join (task_t *task)
     // se task ja foi finalizada, retorna seu codigo de saida
     if(task->state == ENDED)
         return task->exit_code;
-    
+#ifdef DEBUG
+    printf("Tarefa %d dependendo de %d (join)\n", __curr_task->tid, task->tid);
+#endif
     // coloca a tarefa atual no vetor de dependencias de task
     task->queue_tasks_join[task->n_tasks_join] = __curr_task;
     task->n_tasks_join++;
@@ -482,6 +506,9 @@ int task_join (task_t *task)
 
 void task_sleep (int t)
 {
+#ifdef DEBUG
+    printf("Tarefa %d dorme por %d segundos\n", __curr_task->tid, t);
+#endif
     // converte t de segundos para ticks (tick = 1ms)
     int ticks = t*1000;
     // atualiza novos valores da tarefa
@@ -497,9 +524,10 @@ int sem_create (semaphore_t *s, int value)
 {
     if(s == NULL)
         return -1;
-    if(s->state == SEM_DESTROYED)
-        return -1;
-    
+#ifdef DEBUG
+    printf("Criando semaforo com valor %d\n", value);
+#endif
+    int aux_preempt = __not_preempt;
     // tarefas de semaforo nao podem ser preemptadas
     __not_preempt = 1;
     
@@ -507,7 +535,7 @@ int sem_create (semaphore_t *s, int value)
     s->queue_sem = NULL;
     s->state = SEM_INITIALIZED;
     
-    __not_preempt = 0;
+    __not_preempt = aux_preempt;
     
     return 0;
 }
@@ -519,10 +547,12 @@ int sem_down (semaphore_t *s)
         return -1;
     if(s->state == SEM_DESTROYED)
         return -1;
-    
+#ifdef DEBUG
+    printf("Semaforo down, valor %d, tarefa curr %d\n", s->value-1, __curr_task->tid);
+#endif
+    int aux_preempt = __not_preempt;
     // tarefas de semaforo nao podem ser preemptadas
     __not_preempt = 1;
-    
     
     // decrementa contador do semaforo
     s->value--;
@@ -536,18 +566,15 @@ int sem_down (semaphore_t *s)
         // adiciona tarefa atual na fila do semaforo
         queue_append((queue_t**)(&(s->queue_sem)), (queue_t*)(__curr_task));
         // volta ao dispatcher
+        __not_preempt = aux_preempt;
         task_switch(&__task_dispatcher);
         
         // checa se o semaforo foi destruido ao retornar a execucao da tarefa
         if(s->state == SEM_DESTROYED)
-        {
-            printf("Semaforo foi destruido!\n");
-            __not_preempt = 0;
             return -1;
-        }
     }
 
-    __not_preempt = 0;
+    __not_preempt = aux_preempt;
 
     return 0;
 }
@@ -560,6 +587,10 @@ int sem_up (semaphore_t *s)
     if(s->state == SEM_DESTROYED)
         return -1;
 
+#ifdef DEBUG
+    printf("Semaforo up, valor %d, tarefa curr %d\n", s->value+1, __curr_task->tid);
+#endif
+    int aux_preempt = __not_preempt;
     // tarefas de semaforo nao podem ser preemptadas
     __not_preempt = 1;
     
@@ -572,9 +603,10 @@ int sem_up (semaphore_t *s)
         // remove primeira tarefa da fila e adiciona a fila de prontas
         queue_remove((queue_t**)(&s->queue_sem), (queue_t*)(task));
         queue_append((queue_t**)(&__queue_ready_tasks), (queue_t*)(task));
+        task->ticks = TICK_QUANTUM;
     }
     
-    __not_preempt = 0;
+    __not_preempt = aux_preempt;
     
     return 0;
 }
@@ -586,7 +618,10 @@ int sem_destroy (semaphore_t *s)
         return -1;
     if(s->state == SEM_DESTROYED)
         return -1;
-    
+#ifdef DEBUG
+    printf("Destruindo semaforo com valor %d\n", s->value); fflush(stdout);
+#endif
+    int aux_preempt = __not_preempt;
     // tarefas de semaforo nao podem ser preemptadas
     __not_preempt = 1;
 
@@ -600,7 +635,7 @@ int sem_destroy (semaphore_t *s)
     }
     s->state = SEM_DESTROYED;
 
-    __not_preempt = 0;
+    __not_preempt = aux_preempt;
 
     return 0;
 }
