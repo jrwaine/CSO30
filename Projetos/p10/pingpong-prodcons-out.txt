@@ -1,0 +1,81 @@
+p1 produziu 83
+p2 produziu 86
+p3 produziu 77
+                  c1 consumiu 83
+                  c2 consumiu 86
+p1 produziu 15
+p2 produziu 93
+p3 produziu 35
+                  c1 consumiu 77
+                  c2 consumiu 15
+p1 produziu 86
+p2 produziu 92
+p3 produziu 49
+                  c1 consumiu 93
+                  c2 consumiu 35
+p1 produziu 21
+p2 produziu 62
+                  c1 consumiu 86
+                  c2 consumiu 92
+p3 produziu 27
+p3 produziu 90
+                  c1 consumiu 49
+                  c2 consumiu 21
+p1 produziu 63
+p2 produziu 63
+                  c1 consumiu 62
+                  c2 consumiu 27
+p1 produziu 26
+p2 produziu 26
+                  c1 consumiu 90
+                  c2 consumiu 63
+p1 produziu 72
+p3 produziu 36
+                  c1 consumiu 63
+                  c2 consumiu 26
+p1 produziu 11
+p2 produziu 68
+                  c1 consumiu 26
+                  c2 consumiu 72
+p1 produziu 67
+p3 produziu 29
+                  c1 consumiu 36
+                  c2 consumiu 11
+p2 produziu 30
+p3 produziu 30
+                  c1 consumiu 68
+                  c2 consumiu 67
+p2 produziu 62
+p1 produziu 23
+                  c1 consumiu 29
+                  c2 consumiu 30
+p2 produziu 67
+p3 produziu 35
+                  c1 consumiu 30
+                  c2 consumiu 62
+p1 produziu 2
+p2 produziu 2
+                  c1 consumiu 23
+                  c2 consumiu 67
+p1 produziu 22
+p3 produziu 58
+                  c1 consumiu 35
+                  c2 consumiu 2
+p1 produziu 69
+p2 produziu 67
+                  c1 consumiu 2
+                  c2 consumiu 22
+p1 produziu 93
+p3 produziu 56
+                  c1 consumiu 58
+                  c2 consumiu 69
+p1 produziu 11
+p2 produziu 42
+                  c1 consumiu 67
+                  c2 consumiu 93
+p1 produziu 29
+p3 produziu 73
+                  c1 consumiu 56
+                  c2 consumiu 11
+p1 produziu 21
+p2 produziu 19
