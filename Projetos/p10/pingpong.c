@@ -158,13 +158,14 @@ void sig_treat()
     __total_ticks++;
     if(__sleep_ticks < TICKS_SLEEP_WATCHER)
         __sleep_ticks++;
-    
-    if(__not_preempt)
-        return;
+   
 
     if(__curr_task->ticks > 0)
         __curr_task->ticks--;
     
+    if(__not_preempt)
+        return; 
+ 
     // nao preempta tarefas de sistema
     if(__curr_task->task_type == TASK_SYS)
         return;
