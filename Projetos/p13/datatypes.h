@@ -10,6 +10,7 @@
 #define _XOPEN_SOURCE 600   /* Para compilar no MAC */
 #include <ucontext.h>
 #include "queue.h"
+#include "diskdriver.h"
 #include <signal.h> // para tamanho da stack e signals
 #include <sys/time.h> // para interrupcoes por tempo
 #include <stdio.h>  // para buffer do printf
@@ -17,7 +18,7 @@
 #include <strings.h> // para bcopy
 
 // defines relacionados a task
-#define INIT 0
+#define DISK_REQUEST 0
 #define READY 1
 #define SUSPS 2
 #define ENDED 3

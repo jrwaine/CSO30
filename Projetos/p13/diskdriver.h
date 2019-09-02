@@ -6,11 +6,26 @@
 
 #ifndef __DISKDRIVER__
 #define __DISKDRIVER__
+#include "datatypes.h"
+
+// defines relacionados ao disco
+#define NUM_BLOCKS 256
+#define BLOCK_SIZE 64
+// tipos de requisicao ao disco
+#define DISK_READ 0
+#define DISK_WRITE 1
+// estados do disco
+#define DISK_BUSY 0
+#define DISK_FREE 1
 
 // structura de dados que representa o disco para o SO
 typedef struct
 {
-  // preencher com os campos necessarios
+    // conteudo do disco [NUM_BLOCKS][BLOCK_SIZE]
+    char** disk_content;
+    int num_blocks; // em bytes
+    int block_size; // em bytes
+    int state;
 } disk_t ;
 
 // inicializacao do driver de disco
