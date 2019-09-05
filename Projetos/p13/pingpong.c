@@ -11,7 +11,7 @@ task_t* __curr_task;
 disk_t __disk_driver;
 int __not_preempt = 0;
 
-// Fila de tarefas esperando pelo disco
+// Fila de tarefas esperando pelo disco (atualizadas por funcoes de disco)
 struct queue_t* __queue_disk_tasks = NULL;
 // Fila para as tarefas prontas
 struct queue_t* __queue_ready_tasks = NULL;
@@ -910,10 +910,6 @@ int diskdriver_init (int *numBlocks, int *blockSize)
     
     if(disk_cmd(DISK_CMD_INIT, 0, NULL) < 0)
         return -1;
-    
-    // inicializa variaveis do driver
-    __disk_driver.queue_task_disk = NULL;
-    __disk_driver.queue_operations = NULL;
 
     // cria semaforo do disco
     sem_create(&__disk_driver.sem_disk, 1);
