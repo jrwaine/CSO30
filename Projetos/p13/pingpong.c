@@ -1,15 +1,14 @@
 #include "datatypes.h"
+#include "diskdriver.h"
 #include "pingpong.h"
 
-// TODO: ALTERAR CODIGO PARA EVITAR QUE PREEMPCAO NO MEIO DE UPDATE QUEUES,
-// EM TAREFAS COMO TASK_SLEEP E TASK_JOIN CAUSEM PROBLEMAS NO SO
 
 unsigned int __tid = 0;
 task_t __task_main;
 task_t __task_dispatcher;
+task_t __task_disk_manager;
 task_t* __curr_task;
-disk_t __disk;
-semaphore_t __sem_disk;
+disk_t __disk_driver;
 int __not_preempt = 0;
 
 // Fila de tarefas esperando pelo disco
@@ -24,8 +23,9 @@ struct queue_t* __queue_ended_tasks = NULL;
 struct queue_t* __queue_sleep_tasks = NULL;
 
 
-// Tratador de sinal
+// Tratadores de sinal
 struct sigaction __action ;
+struct sigaction __action_usr1;
 // Inicialização to timer
 struct itimerval __timer;
 // Numero total de ticks
@@ -42,6 +42,8 @@ void sig_treat();
 unsigned int systime();
 void print_task_info(task_t* task);
 void sleep_watcher();
+void sig_usr1_treat();
+void func_disk_manager();
 
 
 // Atualiza filas e tarefa para um novo estado (init, pronta, suspensa)
@@ -98,11 +100,10 @@ int task_getprio_total(task_t* task)
 void dispatcher()
 {
     // Enquanto ainda houver tarefas prontas e nem todas tiverem terminado 
-    // (sem contar dispatcher)
+    // (sem contar dispatcher nem disk manager)
     // Obs.: fila deve ser maior que um pois a tarefa do dispatcher esta nela
     while(queue_size((queue_t*)(__queue_ready_tasks)) > 1 
-        || queue_size(__queue_ended_tasks) < ((int)__tid-1)
-        || queue_size(__queue_susps_tasks) > 0)
+        || queue_size(__queue_ended_tasks) < ((int)__tid-2))
     {
         // De tempos em tempos chama o sleep_watcher
         if(__sleep_ticks >= TICKS_SLEEP_WATCHER)
@@ -226,6 +227,38 @@ void sleep_watcher()
     }
 }
 
+void sig_usr1_treat()
+{
+    // acorda tarefa que foi atendida (primeira da fila)
+    update_queues((task_t*)__queue_disk_tasks, READY);
+    // acorda gerenciador de disco
+    if(__task_disk_manager.state != READY)
+        update_queues((task_t*)&__task_disk_manager, READY);
+}
+
+
+void func_disk_manager()
+{
+    while(1)
+    {
+        // se o disco esta livre
+        if(disk_cmd(DISK_CMD_STATUS, 0, NULL) == DISK_STATUS_IDLE)
+        {
+            // se ha tarefas na fila
+            if(queue_size((queue_t*)__queue_disk_tasks) > 0)
+            {
+                // FCFS (fila)
+                task_t* task = (task_t*)__queue_disk_tasks;
+                disk_cmd(task->disk_oper, task->disk_block, task->disk_buffer);
+            }
+        }
+
+        // suspende gerenciador de disco
+        update_queues(&__task_disk_manager, SUSPS);
+        // volta para o dispatcher
+        task_switch(&__task_dispatcher);
+    }
+}
 
 void pingpong_init()
 {
@@ -275,6 +308,9 @@ void pingpong_init()
     __task_main.time_ini_sleep = 0;
     __task_main.time_wake = 0;
     
+    __task_main.disk_oper = -1; // valor nao valido
+    __task_main.disk_block = 0;
+    __task_main.disk_buffer = NULL;
     __tid++;
 
 
@@ -285,11 +321,24 @@ void pingpong_init()
     task_create(&__task_dispatcher, (void*)(*dispatcher), NULL);
     __task_dispatcher.task_type = TASK_SYS; // atualiza tipo de dispatcher
 
-    // Configura tratador de sinais
+    // Cria tarefa gerenciador de disco
+    task_create(&__task_disk_manager, (void*)(*func_disk_manager), NULL);
+    __task_disk_manager.task_type = TASK_SYS; // atualiza tipo de disk_manager
+
+    // Configura tratadores de sinais
     __action.sa_handler = sig_treat;
     sigemptyset (&__action.sa_mask);
     __action.sa_flags = 0;
     if (sigaction (SIGALRM, &__action, 0) < 0)
+    {
+        perror ("Erro em sigaction: ") ;
+        exit (1) ;
+    }
+
+    __action_usr1.sa_handler = sig_usr1_treat;
+    sigemptyset (&__action_usr1.sa_mask);
+    __action_usr1.sa_flags = 0;
+    if(sigaction(SIGUSR1, &__action_usr1, 0) < 0)
     {
         perror ("Erro em sigaction: ") ;
         exit (1) ;
@@ -311,6 +360,8 @@ void pingpong_init()
     
     // coloca main na fila de tarefas prontas (apos o dispatcher)
     update_queues(&__task_main, READY);
+    // coloca gerenciador de disco na fila de suspensas
+    update_queues(&__task_disk_manager, SUSPS);
 
     // inicia o dispatcher
     task_yield(&__task_dispatcher);
@@ -348,6 +399,10 @@ int task_create (task_t *task,
     
     task->time_ini_sleep = 0;
     task->time_wake = 0;
+
+    __task_main.disk_oper = -1; // valor nao valido
+    __task_main.disk_block = 0;
+    __task_main.disk_buffer = NULL;
 
     __tid++;
     
@@ -393,7 +448,8 @@ void task_exit (int exitCode)
         update_queues(aux, READY);
     }
     // saida de tarefas eh sempre para o dispatcher
-    task_switch(&__task_dispatcher);
+    if(__curr_task != &__task_dispatcher)
+        task_switch(&__task_dispatcher);
 }
 
 
@@ -848,50 +904,68 @@ int diskdriver_init (int *numBlocks, int *blockSize)
 {
     if(numBlocks == NULL || blockSize == NULL)
         return -1;
-    // ocupado alocando recursos
-    __disk.state = DISK_BUSY;
-
-    __disk.num_blocks = NUM_BLOCKS;
-    __disk.block_size = BLOCK_SIZE;
-    *numBlocks = __disk.num_blocks;
-    *blockSize = __disk.block_size;
+    int aux_preempt = __not_preempt; 
+    // nao preemptar inicalizacao do disco
+    __not_preempt = 1;
     
-    // aloca memoria para o disco
-    // mudar pra ler/escrever direto no disco?
-    __disk.disk_content = (void*)malloc(__disk.num_blocks);
-    int i, j;
-    for(i = 0; i < __disk.num_blocks; i++)
-    {
-        __disk.disk_content[i] = (char)malloc(__disk.block_size);
-    }
-
-    // ALTERAR ISSO PARA LER DO ARQUIVO
-    for(i = 0; i < __disk.num_blocks; i++)
-    {
-        for(j = 0; j < __disk.block_size; j++)
-        {
-            __disk.disk_content[i][j] = ((j>i)?'a'+('a'+j)%'Z':'a'+('a'+i)%'Z');
-        }
-    }
+    if(disk_cmd(DISK_CMD_INIT, 0, NULL) < 0)
+        return -1;
+    
+    // inicializa variaveis do driver
+    __disk_driver.queue_task_disk = NULL;
+    __disk_driver.queue_operations = NULL;
 
     // cria semaforo do disco
-    if(sem_create(&__sem_disk, 1) < 0)
-        return -1;
+    sem_create(&__disk_driver.sem_disk, 1);
 
-    __disk.state = DISK_FREE;
+    // pega tamanho do disco
+    *numBlocks = disk_cmd(DISK_CMD_DISKSIZE, 0, NULL);
+    *blockSize = disk_cmd(DISK_CMD_BLOCKSIZE, 0, NULL);
+
+    __not_preempt = aux_preempt;
     return 0;
 }
 
 
 int disk_block_read (int block, void *buffer)
 {
-    if(block >= __disk.num_blocks)
+    if(block >= disk_cmd(DISK_CMD_DISKSIZE, 0, NULL))
         return -1;
-    sem_down(&__sem_disk);
+    if(buffer == NULL)
+        return -1;
+
+    __curr_task->disk_oper = DISK_CMD_READ;
+    __curr_task->disk_block = block;
+    __curr_task->disk_buffer = buffer;
+    update_queues(__curr_task, DISK_REQUEST);
+
+    // acorda tarefa de disco
+    if(__task_disk_manager.state != READY)
+        update_queues((task_t*)&__task_disk_manager, READY);
+    
+    task_switch(&__task_dispatcher);
+
+    return 0;
 }
 
 
 int disk_block_write (int block, void *buffer)
 {
+    if(block >= disk_cmd(DISK_CMD_DISKSIZE, 0, NULL))
+        return -1;
+    if(buffer == NULL)
+        return -1;
+    
+    __curr_task->disk_oper = DISK_CMD_WRITE;
+    __curr_task->disk_block = block;
+    __curr_task->disk_buffer = buffer;
+    update_queues(__curr_task, DISK_REQUEST);
 
+    // acorda tarefa de disco
+    if(__task_disk_manager.state != READY)
+        update_queues((task_t*)&__task_disk_manager, READY);
+    
+    task_switch(&__task_dispatcher);
+
+    return 0;
 }

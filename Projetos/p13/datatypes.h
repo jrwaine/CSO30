@@ -10,7 +10,6 @@
 #define _XOPEN_SOURCE 600   /* Para compilar no MAC */
 #include <ucontext.h>
 #include "queue.h"
-#include "diskdriver.h"
 #include <signal.h> // para tamanho da stack e signals
 #include <sys/time.h> // para interrupcoes por tempo
 #include <stdio.h>  // para buffer do printf
@@ -102,6 +101,14 @@ typedef struct task_t
     unsigned int time_ini_sleep;
     // Tempo que a tarefa pode acordar
     unsigned int time_wake;
+
+    // Operacao requisitada ao disco (read ou write)
+    int disk_oper;
+    // bloco a ser lido ou escrito
+    int disk_block;
+    // buffer para ser escrito ou carregado
+    void* disk_buffer;
+
 } task_t ;
 
 // estrutura que define um semáforo

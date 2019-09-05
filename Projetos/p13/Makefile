@@ -18,7 +18,7 @@ INCLUDES =
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS =
+LFLAGS = -lrt
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
@@ -26,7 +26,7 @@ LFLAGS =
 LIBS = -lm
 
 # define the C source files
-SRCS = pingpong-mqueue.c pingpong.c queue.c
+SRCS = pingpong-disco.c harddisk.c pingpong.c queue.c
 
 # define the C object files 
 #
