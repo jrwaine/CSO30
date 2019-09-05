@@ -23,9 +23,6 @@
 // structura de dados que representa o disco para o SO
 typedef struct
 {
-    // ambas filas devem estar sincronizadas
-    task_t* queue_task_disk;
-    queue_int_t* queue_operations;
     // semaforo do disco
     semaphore_t sem_disk;
     
