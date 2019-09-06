@@ -1,0 +1,8 @@
+FCFS
+Disk driver informations: disk politic 0, total blocks 7681, total usage time 50635 ms
+
+SSTF
+Disk driver informations: disk politic 1, total blocks 4217, total usage time 44255 ms
+
+CSCAN
+Disk driver informations: disk politic 2, total blocks 4095, total usage time 44249 ms
