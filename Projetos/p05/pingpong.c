@@ -5,6 +5,7 @@ unsigned int __tid = 0;
 task_t __task_main;
 task_t __task_dispatcher;
 task_t* __curr_task;
+int __not_preempt = 0;
 
 // Fila para as tarefas que nao sao do usuario criadas
 struct queue_t* __queue_init_tasks = NULL;
@@ -31,6 +32,8 @@ void sig_treat();
 // Atualiza filas e tarefa para um novo estado (init, pronta, suspensa)
 void update_queues(task_t* task, int new_state)
 {
+    int aux_preempt = __not_preempt;
+    __not_preempt = 1;
     queue_t** queue_rm, **queue_add;
     if(task == NULL)
         return;
@@ -51,9 +54,9 @@ void update_queues(task_t* task, int new_state)
         queue_add = &__queue_susps_tasks;
     else if(new_state == ENDED)
         queue_add = &__queue_ended_tasks;
-    
     queue_remove((queue_t**)(queue_rm), (queue_t*)(task));
     queue_append((queue_t**)(queue_add), (queue_t*)(task));
+    __not_preempt = aux_preempt;
 }
 
 // Retorna a soma da prioridade dinamica com a estatica da tarefa
@@ -71,11 +74,8 @@ void dispatcher()
     {
         // pega a próxima tarefa
         task_t* next = scheduler();
+        task_switch(next);
 
-        if(next != &__task_dispatcher)
-        {
-            task_switch(next);
-        }
     }
     task_exit(0);
 }
@@ -118,12 +118,14 @@ void sig_treat()
     // nao preempta tarefas de sistema
     if(__curr_task->task_type == TASK_SYS)
         return;
-    __curr_task->ticks--;
-    if(__curr_task->ticks == 0)
+    if(__curr_task->ticks > 0)
+        __curr_task->ticks--;
+    
+    if(__curr_task->ticks <= 0)
     {
         // preempta e retorna para o dispatcher
-        __curr_task->ticks = TICK_QUANTUM;
-        task_yield(&__task_dispatcher);
+        if(!__not_preempt)
+            task_yield(&__task_dispatcher);
     }
 }
 
@@ -199,6 +201,7 @@ int task_create (task_t *task,
 #ifdef DEBUG
     printf("Criando tarefa de ID %d\n", __tid);
 #endif
+    __not_preempt = 1;
     // Relacionado a task
     task->prev = NULL;
     task->next = NULL;
@@ -227,7 +230,7 @@ int task_create (task_t *task,
         return -1;
     }
     makecontext(&(task->context), (void*)(*start_func), 1, arg);
-
+    __not_preempt = 0;
     return task->tid;
 }
 
@@ -261,8 +264,11 @@ int task_switch (task_t *task)
     printf("Tarefa de ID %d assumindo o processador\n", task->tid);
 #endif
     // atualiza task atual e muda de contextos
+    __not_preempt = 1;
     task_t* aux = __curr_task;
     __curr_task = task;
+    __curr_task->ticks = TICK_QUANTUM;
+    __not_preempt = 0;
     return swapcontext(&(aux->context), &(task->context));
 }
 
@@ -273,26 +279,6 @@ int task_id ()
     printf("Pegando o ID da tarefa atual\n");
 #endif
     return __curr_task->tid;
-}
-
-
-void task_suspend (task_t *task, task_t **queue)
-{
-    if(queue == NULL)
-    {
-        return;
-    }
-    if(task == NULL)
-    {
-        task = __curr_task;
-    }
-    update_queues(task, SUSPS);
-}
-
-
-void task_resume (task_t *task)
-{
-    update_queues(task, READY);
 }
 
 
