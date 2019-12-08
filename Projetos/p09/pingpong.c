@@ -151,7 +151,7 @@ void sig_treat()
     __total_ticks++;
     if(__sleep_ticks < TICKS_SLEEP_WATCHER)
         __sleep_ticks++;
-    
+
     if(__curr_task->ticks > 0)
         __curr_task->ticks--;
 
@@ -187,6 +187,8 @@ void print_task_info(task_t* task)
 // Acorda tarefas que ja podem acordar
 void sleep_watcher()
 {
+    __sleep_ticks = 0;
+    
     int size = queue_size(__queue_sleep_tasks);
     // tasks que devem continuar dormindo
     int cont = 0;
