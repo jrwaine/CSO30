@@ -209,6 +209,8 @@ void sleep_watcher()
     printf("Checando tarefas dormindo\n");
 #endif
 
+    __sleep_ticks = 0;
+
     int size = queue_size(__queue_sleep_tasks);
     // tasks que devem continuar dormindo
     int cont = 0;
