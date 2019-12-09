@@ -1,9 +1,6 @@
 #include "datatypes.h"
 #include "pingpong.h"
 
-// TODO: ALTERAR CODIGO PARA EVITAR QUE PREEMPCAO NO MEIO DE UPDATE QUEUES,
-// EM TAREFAS COMO TASK_SLEEP E TASK_JOIN CAUSEM PROBLEMAS NO SO
-
 unsigned int __tid = 0;
 task_t __task_main;
 task_t __task_dispatcher;
@@ -768,10 +765,13 @@ int mqueue_send (mqueue_t *queue, void *msg)
         return -1;
     
     // copia conteudo da mensagem para a fila
-    bcopy(msg, queue->queue_msg[queue->n_msg], queue->max_size_msg);
+    int i;
+    for(i = queue->n_msg-1; i >= 0; i--)
+        bcopy(queue->queue_msg[i], queue->queue_msg[i+1], queue->max_size_msg);
+    bcopy(msg, queue->queue_msg[0], queue->max_size_msg);
     queue->n_msg++;
 
-    if(sem_up(&queue->sem_rcv))
+    if(sem_up(&queue->sem_rcv) < 0)
         return -1;
     
     __not_preempt = aux_preempt;
@@ -794,8 +794,8 @@ int mqueue_recv (mqueue_t *queue, void *msg)
     
     // copia conteudo da fila para a mensagem
     queue->n_msg--;
-    bcopy(queue->queue_msg[queue->n_msg], msg, queue->max_size_msg);
-    
+    bcopy(queue->queue_msg[queue->n_msg], msg, queue->max_size_msg);   
+
     if(sem_up(&queue->sem_send) < 0)
         return -1;
     
